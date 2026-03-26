@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nura Health - Phlebotomist App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Lexend', sans-serif;
+        }
+
+        :root {
+            --primary: #2B3879;
+            --accent: #80E5CB;
+            --background: #00001E;
+            --card-bg: #2B3879;
+            --text: #FFFFFF;
+            --text-secondary: #A0A0B0;
+            --success: #4CAF50;
+            --warning: #FFB74D;
+            --error: #F44336;
+            --disabled: #4A4A6A;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            padding-top: calc(16px + env(safe-area-inset-top, 20px));
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding-bottom: 80px;
+            min-height: calc(100vh - 60px);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Week Navigation */
+        .week-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+        }
+
+        .week-nav button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .week-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Week Calendar */
+        .week-calendar {
+            display: flex;
+            gap: 4px;
+            padding: 8px;
+        }
+
+        .day-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            background: var(--card-bg);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .day-btn.selected {
+            background: var(--accent);
+        }
+
+        .day-btn.today:not(.selected) {
+            border: 1px solid var(--accent);
+        }
+
+        .day-name {
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .day-btn.selected .day-name,
+        .day-btn.selected .day-number {
+            color: var(--primary);
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 2px;
+        }
+
+        .job-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-top: 4px;
+        }
+
+        .day-btn.selected .job-indicator {
+            background: var(--primary);
+        }
+
+        /* Jobs List */
+        .jobs-list {
+            padding: 16px;
+        }
+
+        .selected-date-label {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        /* Job Card */
+        .job-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .job-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .job-date {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .job-time {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-upcoming { background: var(--accent); color: var(--background); }
+        .status-in_progress { background: var(--warning); color: var(--background); }
+        .status-completed { background: var(--success); color: var(--background); }
+
+        .job-location, .job-earnings {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .job-suburb {
+            font-size: 14px;
+        }
+
+        .job-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .job-expanded {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .job-card.expanded .job-expanded {
+            display: block;
+        }
+
+        .address-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .address-text {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .chevron {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* No Jobs */
+        .no-jobs {
+            text-align: center;
+            padding: 64px 16px;
+        }
+
+        .no-jobs-icon {
+            font-size: 48px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .no-jobs-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .no-jobs-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Runsheet Styles */
+        .runsheet-content {
+            padding: 16px;
+        }
+
+        .step-container {
+            margin-bottom: 24px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .stop-count {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .step-content {
+            margin-left: 36px;
+        }
+
+        .time-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .time-text {
+            font-size: 16px;
+        }
+
+        /* Toggle Buttons */
+        .toggle-container {
+            margin-bottom: 16px;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toggle-btn {
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: 1px solid var(--primary);
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--primary);
+        }
+
+        /* Address Display */
+        .address-display {
+            display: flex;
+            align-items: flex-start;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .address-display span {
+            font-size: 14px;
+            flex: 1;
+        }
+
+        /* Maps Button */
+        .maps-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        /* Checklist */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .checklist-label {
+            font-size: 14px;
+        }
+
+        .checklist-label.checked {
+            color: var(--accent);
+        }
+
+        /* Swipe Slider */
+        .swipe-slider {
+            width: 100%;
+            height: 60px;
+            background: var(--primary);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 8px;
+            touch-action: none;
+        }
+
+        .slider-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 24px;
+            width: 0;
+            transition: width 0.1s;
+        }
+
+        .slider-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            margin-left: 28px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .slider-thumb {
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: 52px;
+            height: 52px;
+            background: var(--primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: left 0.1s;
+            z-index: 10;
+        }
+
+        .slider-thumb:active {
+            cursor: grabbing;
+        }
+
+        .swipe-slider.completed {
+            background: rgba(128, 229, 203, 0.2);
+        }
+
+        .swipe-slider.completed .slider-label {
+            color: var(--accent);
+            margin-left: 0;
+        }
+
+        .swipe-slider.completed .slider-thumb {
+            display: none;
+        }
+
+        .swipe-slider.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Patient Stop Card */
+        .patient-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .patient-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .patient-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .patient-info {
+            flex: 1;
+        }
+
+        .patient-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .patient-suburb {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            margin-top: 12px;
+        }
+
+        .item-list {
+            margin-bottom: 8px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .bullet {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .item-text {
+            font-size: 14px;
+        }
+
+        .notes-container {
+            margin-top: 8px;
+        }
+
+        .notes-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .notes-input {
+            width: 100%;
+            background: var(--background);
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Lexend', sans-serif;
+            resize: none;
+        }
+
+        .notes-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Drop Off Card */
+        .dropoff-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .dropoff-location {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 2px solid var(--accent);
+            margin-top: 16px;
+        }
+
+        .summary-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .summary-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .summary-value-accent {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Profile Styles */
+        .profile-content {
+            padding: 16px;
+        }
+
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 16px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(128, 229, 203, 0.1);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 40px;
+        }
+
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .employment-toggle {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .employment-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .employment-options {
+            display: flex;
+            background: var(--background);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .employment-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .employment-btn.active {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(244, 67, 54, 0.1);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid var(--error);
+        }
+
+        .alert-text {
+            color: var(--error);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Section Tabs */
+        .section-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+
+        .section-tab {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .section-tab.active {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        /* Document Card */
+        .document-card {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .doc-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            background: rgba(128, 229, 203, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 20px;
+        }
+
+        .doc-info {
+            flex: 1;
+        }
+
+        .doc-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .doc-expiry {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .doc-right {
+            text-align: right;
+        }
+
+        .doc-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .doc-status.valid {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+        }
+
+        .doc-status.expiring {
+            background: rgba(255, 183, 77, 0.2);
+            color: var(--warning);
+        }
+
+        .doc-status.expired {
+            background: rgba(244, 67, 54, 0.2);
+            color: var(--error);
+        }
+
+        .upload-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            margin-top: 4px;
+        }
+
+        /* Earnings Section */
+        .earnings-cards {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .earnings-card {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .earnings-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .earnings-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .bar-chart {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 150px;
+            padding: 10px 0;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 2px;
+        }
+
+        .bar-background {
+            width: 100%;
+            height: 120px;
+            background: rgba(128, 229, 203, 0.1);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+        }
+
+        .bar {
+            width: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            transition: height 0.3s;
+        }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .bar-value {
+            font-size: 9px;
+            color: var(--text);
+            margin-top: 2px;
+        }
+
+        /* Reports Section */
+        .reports-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .report-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(128, 229, 203, 0.2);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .report-number {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .download-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .report-period {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .report-details {
+            border-top: 1px solid rgba(128, 229, 203, 0.2);
+            padding-top: 8px;
+        }
+
+        .report-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .report-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .report-label-bold {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .report-value {
+            font-size: 14px;
+        }
+
+        .report-value-accent {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--card-bg);
+            border-top: 1px solid rgba(128, 229, 203, 0.2);
+            display: flex;
+            padding: 8px 0;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Icons (using text symbols) */
+        .icon {
+            display: inline-block;
+        }
+
+        /* Hidden sections */
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Jobs Tab -->
+    <div id="jobs-tab" class="tab-content active">
+        <div class="header">
+            <div class="logo">
+                <svg width="36" height="36" viewBox="0 0 100 100">
+                    <path d="M5 12 L38 12 L38 24 L18 24 L50 70 L50 82 L38 82 L38 75 L8 24 L5 24 Z" fill="#2B3879"/>
+                    <circle cx="70" cy="18" r="12" fill="#2B3879"/>
+                    <circle cx="30" cy="82" r="12" fill="#80E5CB"/>
+                    <path d="M50 88 L62 88 L62 75 L82 45 L82 24 L62 24 L62 36 L50 36 Z" fill="#80E5CB"/>
+                    <path d="M82 24 L95 24 L95 88 L82 88 Z" fill="#80E5CB"/>
+                </svg>
+                <span class="logo-text">nura</span>
+            </div>
+            <span class="header-title">My Jobs</span>
+        </div>
+
+        <div class="week-nav">
+            <button onclick="navigateWeek('prev')">‹</button>
+            <span class="week-label" id="week-label"></span>
+            <button onclick="navigateWeek('next')">›</button>
+        </div>
+
+        <div class="week-calendar" id="week-calendar"></div>
+
+        <div class="jobs-list">
+            <div class="selected-date-label" id="selected-date-label"></div>
+            <div id="jobs-container"></div>
+        </div>
+    </div>
+
+    <!-- Runsheet Tab -->
+    <div id="runsheet-tab" class="tab-content">
+        <div class="header">
+            <div class="logo">
+                <svg width="36" height="36" viewBox="0 0 100 100">
+                    <path d="M5 12 L38 12 L38 24 L18 24 L50 70 L50 82 L38 82 L38 75 L8 24 L5 24 Z" fill="#2B3879"/>
+                    <circle cx="70" cy="18" r="12" fill="#2B3879"/>
+                    <circle cx="30" cy="82" r="12" fill="#80E5CB"/>
+                    <path d="M50 88 L62 88 L62 75 L82 45 L82 24 L62 24 L62 36 L50 36 Z" fill="#80E5CB"/>
+                    <path d="M82 24 L95 24 L95 88 L82 88 Z" fill="#80E5CB"/>
+                </svg>
+                <span class="logo-text">nura</span>
+            </div>
+            <span class="header-title" id="runsheet-date"></span>
+        </div>
+
+        <div class="runsheet-content" id="runsheet-content"></div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="profile-tab" class="tab-content">
+        <div class="header">
+            <div class="logo">
+                <svg width="36" height="36" viewBox="0 0 100 100">
+                    <path d="M5 12 L38 12 L38 24 L18 24 L50 70 L50 82 L38 82 L38 75 L8 24 L5 24 Z" fill="#2B3879"/>
+                    <circle cx="70" cy="18" r="12" fill="#2B3879"/>
+                    <circle cx="30" cy="82" r="12" fill="#80E5CB"/>
+                    <path d="M50 88 L62 88 L62 75 L82 45 L82 24 L62 24 L62 36 L50 36 Z" fill="#80E5CB"/>
+                    <path d="M82 24 L95 24 L95 88 L82 88 Z" fill="#80E5CB"/>
+                </svg>
+                <span class="logo-text">nura</span>
+            </div>
+            <span class="header-title">Profile</span>
+        </div>
+
+        <div class="profile-content" id="profile-content"></div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('jobs')">
+            <span class="nav-icon">💼</span>
+            <span class="nav-label">Jobs</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('runsheet')">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Runsheet</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('profile')">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Profile</span>
+        </button>
+    </nav>
+
+    <script>
+        // Data
+        const today = new Date();
+        let selectedDate = new Date();
+        let currentWeekStart = getWeekStart(today);
+
+        // Sample Jobs
+        const suburbs = ['Paddington', 'New Farm', 'Fortitude Valley', 'Woolloongabba', 'West End', 'Kangaroo Point', 'South Brisbane', 'Teneriffe'];
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function formatDate(date, format) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const fullDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            
+            if (format === 'EEE') return days[date.getDay()];
+            if (format === 'EEEE') return fullDays[date.getDay()];
+            if (format === 'd') return date.getDate();
+            if (format === 'dd') return String(date.getDate()).padStart(2, '0');
+            if (format === 'MMM') return months[date.getMonth()];
+            if (format === 'MMMM') return fullMonths[date.getMonth()];
+            if (format === 'yyyy') return date.getFullYear();
+            if (format === 'EEE, dd MMM') return `${days[date.getDay()]}, ${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]}`;
+            if (format === 'EEEE, dd MMMM') return `${fullDays[date.getDay()]}, ${String(date.getDate()).padStart(2, '0')} ${fullMonths[date.getMonth()]}`;
+            if (format === 'EEEE, dd MMMM yyyy') return `${fullDays[date.getDay()]}, ${String(date.getDate()).padStart(2, '0')} ${fullMonths[date.getMonth()]} ${date.getFullYear()}`;
+            if (format === 'dd MMM') return `${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]}`;
+            if (format === 'dd MMM yyyy') return `${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()}`;
+            return date.toDateString();
+        }
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function isSameDay(d1, d2) {
+            return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
+        }
+
+        function generateJobs() {
+            const jobs = [];
+            for (let i = 0; i < 7; i++) {
+                const jobDate = addDays(currentWeekStart, i);
+                const isPast = jobDate < today && !isSameDay(jobDate, today);
+                const isToday = isSameDay(jobDate, today);
+                
+                if (i !== 5 && i !== 6) {
+                    jobs.push({
+                        id: `job-${i}`,
+                        date: formatDate(jobDate, 'EEE, dd MMM'),
+                        fullDate: jobDate,
+                        timeSlot: '7:00 AM - 11:30 AM',
+                        suburb: suburbs[i % suburbs.length],
+                        address: `${Math.floor(Math.random() * 200) + 1} ${suburbs[i % suburbs.length]} Street, ${suburbs[i % suburbs.length]} QLD 4000`,
+                        earnings: 48 + Math.floor(Math.random() * 20),
+                        status: isPast ? 'completed' : isToday ? 'in_progress' : 'upcoming'
+                    });
+                }
+            }
+            return jobs;
+        }
+
+        // Patient Stops
+        const patientStops = [
+            {
+                id: 'stop-1',
+                patientName: 'Margaret Thompson',
+                address: '42 Latrobe Terrace, Paddington QLD 4064',
+                suburb: 'Paddington',
+                tubes: ['2x EDTA Purple', '1x SST Gold', '1x Sodium Citrate Blue'],
+                accessories: ['21G needle', 'tourniquet', 'alcohol wipes', 'gauze', 'bandaid'],
+                arrivedAt: null,
+                completedAt: null
+            },
+            {
+                id: 'stop-2',
+                patientName: 'Robert Chen',
+                address: '15 Brunswick Street, New Farm QLD 4005',
+                suburb: 'New Farm',
+                tubes: ['1x EDTA Purple', '2x SST Gold'],
+                accessories: ['23G butterfly needle', 'tourniquet', 'alcohol wipes', 'gauze', 'bandaid'],
+                arrivedAt: null,
+                completedAt: null
+            },
+            {
+                id: 'stop-3',
+                patientName: 'Jessica Williams',
+                address: '78 Commercial Road, Teneriffe QLD 4005',
+                suburb: 'Teneriffe',
+                tubes: ['3x EDTA Purple', '1x Lithium Heparin Green'],
+                accessories: ['21G needle', 'tourniquet', 'alcohol wipes', 'gauze', 'bandaid', 'cold pack'],
+                arrivedAt: null,
+                completedAt: null
+            },
+            {
+                id: 'stop-4',
+                patientName: 'David Morrison',
+                address: '203 Given Terrace, Paddington QLD 4064',
+                suburb: 'Paddington',
+                tubes: ['1x EDTA Purple', '1x SST Gold', '1x Sodium Fluoride Grey'],
+                accessories: ['21G needle', 'tourniquet', 'alcohol wipes', 'gauze', 'bandaid'],
+                arrivedAt: null,
+                completedAt: null
+            }
+        ];
+
+        // Runsheet State
+        const runsheetState = {
+            shiftStarted: null,
+            printablesRequired: true,
+            printablesCollected: null,
+            checklistCompleted: null,
+            checklist: {},
+            specimensDroppedOff: null
+        };
+
+        // Profile Data
+        const profile = {
+            name: 'Sarah Chen',
+            phone: '+61 412 345 678',
+            email: 'sarah.chen@email.com',
+            employmentType: 'contractor',
+            weeklyEarnings: 678,
+            monthlyEarnings: 2734,
+            earningsHistory: [
+                { week: 'Week 1', amount: 624 },
+                { week: 'Week 2', amount: 712 },
+                { week: 'Week 3', amount: 568 },
+                { week: 'Week 4', amount: 695 },
+                { week: 'Week 5', amount: 754 },
+                { week: 'Week 6', amount: 648 },
+                { week: 'Week 7', amount: 702 },
+                { week: 'Week 8', amount: 678 }
+            ]
+        };
+
+        const documents = [
+            { id: 'doc-1', name: 'Police Check', expiry: addDays(today, 180), status: 'valid' },
+            { id: 'doc-2', name: 'Working With Children Check', expiry: addDays(today, 25), status: 'expiring' },
+            { id: 'doc-3', name: 'Phlebotomy Certificate', expiry: addDays(today, 365), status: 'valid' },
+            { id: 'doc-4', name: "Driver's Licence", expiry: addDays(today, 730), status: 'valid' },
+            { id: 'doc-5', name: 'Public Liability Insurance', expiry: addDays(today, -10), status: 'expired' },
+            { id: 'doc-6', name: 'ABN', expiry: null, status: 'valid' }
+        ];
+
+        const taxInvoices = [
+            { id: 'inv-1', number: 'INV-2024-001', period: '1-14 Jul 2025', runs: 12, amount: 624.00, gst: 56.73 },
+            { id: 'inv-2', number: 'INV-2024-002', period: '15-28 Jul 2025', runs: 14, amount: 712.00, gst: 64.73 },
+            { id: 'inv-3', number: 'INV-2024-003', period: '29 Jul - 11 Aug 2025', runs: 11, amount: 568.00, gst: 51.64 }
+        ];
+
+        const payslips = [
+            { id: 'pay-1', period: '1-14 Jul 2025', gross: 1248.00, tax: 187.20, super: 130.03, net: 1060.80 },
+            { id: 'pay-2', period: '15-28 Jul 2025', gross: 1424.00, tax: 213.60, super: 148.50, net: 1210.40 }
+        ];
+
+        let activeProfileSection = 'documents';
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            if (tabName === 'runsheet') renderRunsheet();
+            if (tabName === 'profile') renderProfile();
+        }
+
+        // Jobs Tab
+        function navigateWeek(direction) {
+            const days = direction === 'prev' ? -7 : 7;
+            currentWeekStart = addDays(currentWeekStart, days);
+            selectedDate = currentWeekStart;
+            renderJobsTab();
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            renderJobsTab();
+        }
+
+        function toggleJobCard(jobId) {
+            const card = document.getElementById(jobId);
+            card.classList.toggle('expanded');
+        }
+
+        function renderJobsTab() {
+            const weekEnd = addDays(currentWeekStart, 6);
+            document.getElementById('week-label').textContent = `${formatDate(currentWeekStart, 'dd MMM')} - ${formatDate(weekEnd, 'dd MMM yyyy')}`;
+
+            const calendarHtml = [];
+            const jobs = generateJobs();
+
+            for (let i = 0; i < 7; i++) {
+                const day = addDays(currentWeekStart, i);
+                const isSelected = isSameDay(day, selectedDate);
+                const isToday = isSameDay(day, today);
+                const hasJob = jobs.some(job => isSameDay(job.fullDate, day));
+
+                calendarHtml.push(`
+                    <button class="day-btn ${isSelected ? 'selected' : ''} ${isToday && !isSelected ? 'today' : ''}" onclick="selectDate(new Date('${day.toISOString()}'))">
+                        <span class="day-name">${formatDate(day, 'EEE')}</span>
+                        <span class="day-number">${formatDate(day, 'd')}</span>
+                        ${hasJob ? '<div class="job-indicator"></div>' : ''}
+                    </button>
+                `);
+            }
+            document.getElementById('week-calendar').innerHTML = calendarHtml.join('');
+
+            document.getElementById('selected-date-label').textContent = formatDate(selectedDate, 'EEEE, dd MMMM');
+
+            const selectedJobs = jobs.filter(job => isSameDay(job.fullDate, selectedDate));
+            
+            if (selectedJobs.length > 0) {
+                const jobsHtml = selectedJobs.map(job => `
+                    <div class="job-card" id="${job.id}" onclick="toggleJobCard('${job.id}')">
+                        <div class="job-header">
+                            <div>
+                                <div class="job-date">${job.date}</div>
+                                <div class="job-time">${job.timeSlot}</div>
+                            </div>
+                            <span class="status-badge status-${job.status}">${job.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        </div>
+                        <div class="job-location">
+                            <span style="color: var(--accent)">📍</span>
+                            <span class="job-suburb">${job.suburb}</span>
+                        </div>
+                        <div class="job-earnings">
+                            <span style="color: var(--accent)">💰</span>
+                            <span class="job-amount">$${job.earnings.toFixed(2)}</span>
+                        </div>
+                        <div class="job-expanded">
+                            <div class="address-label">Full Address</div>
+                            <div class="address-text">${job.address}</div>
+                        </div>
+                        <div class="chevron">▼</div>
+                    </div>
+                `).join('');
+                document.getElementById('jobs-container').innerHTML = jobsHtml;
+            } else {
+                document.getElementById('jobs-container').innerHTML = `
+                    <div class="no-jobs">
+                        <div class="no-jobs-icon">📅</div>
+                        <div class="no-jobs-text">No jobs scheduled</div>
+                        <div class="no-jobs-subtext">Enjoy your day off!</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Runsheet Tab
+        const checklistItems = [
+            { id: 'badge', label: 'ID badge worn' },
+            { id: 'coolbag', label: 'Cool bag & ice packs ready' },
+            { id: 'ppe', label: 'PPE stocked (gloves, masks)' },
+            { id: 'sharps', label: 'Sharps container in kit' },
+            { id: 'phone', label: 'Mobile phone charged' },
+            { id: 'bags', label: 'Specimen bags packed' }
+        ];
+
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        function handleSliderComplete(sliderId, stateKey, labelPrefix) {
+            const time = getCurrentTime();
+            if (stateKey.includes('.')) {
+                const [parent, child, prop] = stateKey.split('.');
+                if (parent === 'patientStops') {
+                    const stop = patientStops.find(s => s.id === child);
+                    if (stop) stop[prop] = time;
+                }
+            } else {
+                runsheetState[stateKey] = time;
+            }
+            renderRunsheet();
+        }
+
+        function togglePrintables(required) {
+            runsheetState.printablesRequired = required;
+            renderRunsheet();
+        }
+
+        function toggleChecklist(itemId) {
+            if (runsheetState.checklistCompleted) return;
+            runsheetState.checklist[itemId] = !runsheetState.checklist[itemId];
+            renderRunsheet();
+        }
+
+        function createSlider(id, label, completed, completedLabel, disabled = false) {
+            if (completed) {
+                return `
+                    <div class="swipe-slider completed">
+                        <div class="slider-label">✓ ${completedLabel}</div>
+                    </div>
+                `;
+            }
+            if (disabled) {
+                return `
+                    <div class="swipe-slider disabled">
+                        <div class="slider-label">${label}</div>
+                        <div class="slider-thumb">›</div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="swipe-slider" id="${id}" ontouchstart="startSlide(event, '${id}')" onmousedown="startSlide(event, '${id}')">
+                    <div class="slider-progress" id="${id}-progress"></div>
+                    <div class="slider-label">${label}</div>
+                    <div class="slider-thumb" id="${id}-thumb">›</div>
+                </div>
+            `;
+        }
+
+        let activeSlider = null;
+        let startX = 0;
+
+        function startSlide(e, sliderId) {
+            e.preventDefault();
+            activeSlider = sliderId;
+            startX = e.touches ? e.touches[0].clientX : e.clientX;
+            document.addEventListener('mousemove', moveSlide);
+            document.addEventListener('mouseup', endSlide);
+            document.addEventListener('touchmove', moveSlide);
+            document.addEventListener('touchend', endSlide);
+        }
+
+        function moveSlide(e) {
+            if (!activeSlider) return;
+            const slider = document.getElementById(activeSlider);
+            const thumb = document.getElementById(`${activeSlider}-thumb`);
+            const progress = document.getElementById(`${activeSlider}-progress`);
+            if (!slider || !thumb) return;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const sliderRect = slider.getBoundingClientRect();
+            const maxX = sliderRect.width - 60;
+            let newX = Math.max(0, Math.min(clientX - sliderRect.left - 30, maxX));
+            
+            thumb.style.left = `${newX + 4}px`;
+            progress.style.width = `${(newX / maxX) * 100}%`;
+        }
+
+        function endSlide(e) {
+            if (!activeSlider) return;
+            const slider = document.getElementById(activeSlider);
+            const thumb = document.getElementById(`${activeSlider}-thumb`);
+            const progress = document.getElementById(`${activeSlider}-progress`);
+            if (!slider || !thumb) {
+                activeSlider = null;
+                return;
+            }
+
+            const sliderRect = slider.getBoundingClientRect();
+            const thumbRect = thumb.getBoundingClientRect();
+            const maxX = sliderRect.width - 60;
+            const currentX = thumbRect.left - sliderRect.left;
+
+            if (currentX >= maxX * 0.8) {
+                // Complete
+                const stateKey = activeSlider.replace('slider-', '');
+                handleSliderComplete(activeSlider, stateKey, '');
+            } else {
+                // Reset
+                thumb.style.left = '4px';
+                progress.style.width = '0%';
+            }
+
+            document.removeEventListener('mousemove', moveSlide);
+            document.removeEventListener('mouseup', endSlide);
+            document.removeEventListener('touchmove', moveSlide);
+            document.removeEventListener('touchend', endSlide);
+            activeSlider = null;
+        }
+
+        function renderRunsheet() {
+            document.getElementById('runsheet-date').textContent = formatDate(today, 'EEEE, dd MMMM yyyy');
+            
+            const allChecked = checklistItems.every(item => runsheetState.checklist[item.id]);
+            const completedStops = patientStops.filter(s => s.completedAt).length;
+
+            let html = `
+                <!-- Step 1: Start Time -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <span class="step-title">Start Time</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="time-display">
+                            <span style="color: var(--accent)">🕐</span>
+                            <span class="time-text">Shift starts at 7:00 AM</span>
+                        </div>
+                        ${createSlider('slider-shiftStarted', 'Swipe to begin shift', runsheetState.shiftStarted, `Shift started at ${runsheetState.shiftStarted}`)}
+                    </div>
+                </div>
+
+                <!-- Step 2: Printables Pickup -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <span class="step-title">Printables Pickup</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="toggle-container">
+                            <div class="toggle-label">Printables required today?</div>
+                            <div class="toggle-options">
+                                <button class="toggle-btn ${runsheetState.printablesRequired ? 'active' : ''}" onclick="togglePrintables(true)">YES</button>
+                                <button class="toggle-btn ${!runsheetState.printablesRequired ? 'active' : ''}" onclick="togglePrintables(false)">NO</button>
+                            </div>
+                        </div>
+                        ${runsheetState.printablesRequired ? `
+                            <div class="address-display">
+                                <span style="color: var(--accent)">📍</span>
+                                <span>123 Ann Street, Brisbane City QLD 4000</span>
+                            </div>
+                            <button class="maps-btn" onclick="window.open('https://maps.google.com/?q=123+Ann+Street+Brisbane+City+QLD+4000')">
+                                <span>🧭</span> Open in Maps
+                            </button>
+                            ${createSlider('slider-printablesCollected', 'Confirm printables collected', runsheetState.printablesCollected, `Collected at ${runsheetState.printablesCollected}`, !runsheetState.shiftStarted)}
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Step 3: Daily Checklist -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <span class="step-title">Daily Checklist</span>
+                    </div>
+                    <div class="step-content">
+                        ${checklistItems.map(item => `
+                            <div class="checklist-item" onclick="toggleChecklist('${item.id}')">
+                                <div class="checkbox ${runsheetState.checklist[item.id] ? 'checked' : ''}"></div>
+                                <span class="checklist-label ${runsheetState.checklist[item.id] ? 'checked' : ''}">${item.label}</span>
+                            </div>
+                        `).join('')}
+                        <div style="margin-top: 8px;">
+                            ${createSlider('slider-checklistCompleted', 'Swipe to confirm all done', runsheetState.checklistCompleted, `Completed at ${runsheetState.checklistCompleted}`, !allChecked)}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Patient Stops -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <span class="step-title">Patient Stops</span>
+                        <span class="stop-count">${completedStops}/${patientStops.length}</span>
+                    </div>
+                    <div class="step-content">
+                        ${patientStops.map((stop, index) => `
+                            <div class="patient-card">
+                                <div class="patient-header">
+                                    <div class="patient-number">${index + 1}</div>
+                                    <div class="patient-info">
+                                        <div class="patient-name">${stop.patientName}</div>
+                                        <div class="patient-suburb">${stop.suburb}</div>
+                                    </div>
+                                </div>
+                                <div class="address-display">
+                                    <span style="color: var(--accent)">📍</span>
+                                    <span>${stop.address}</span>
+                                </div>
+                                <button class="maps-btn" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(stop.address)}')">
+                                    <span>🧭</span> Navigate
+                                </button>
+                                <div class="section-title">Required Tubes</div>
+                                <div class="item-list">
+                                    ${stop.tubes.map(tube => `
+                                        <div class="item-row">
+                                            <div class="bullet"></div>
+                                            <span class="item-text">${tube}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="section-title">Required Accessories</div>
+                                <div class="item-list">
+                                    ${stop.accessories.map(acc => `
+                                        <div class="item-row">
+                                            <div class="bullet"></div>
+                                            <span class="item-text">${acc}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${createSlider(`slider-patientStops.${stop.id}.arrivedAt`, 'Swipe to confirm arrival', stop.arrivedAt, `Arrived at ${stop.arrivedAt}`)}
+                                <div style="height: 8px;"></div>
+                                ${createSlider(`slider-patientStops.${stop.id}.completedAt`, 'Swipe to complete collection', stop.completedAt, `Completed at ${stop.completedAt}`, !stop.arrivedAt)}
+                                <div class="notes-container">
+                                    <div class="notes-label">Notes (optional)</div>
+                                    <textarea class="notes-input" placeholder="Add notes about this collection..." rows="2"></textarea>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Step 5: Drop Off -->
+                <div class="step-container">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <span class="step-title">Drop Off</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="dropoff-card">
+                            <div class="dropoff-location">Sullivan Nicolaides Pathology, Bowen Hills</div>
+                            <div class="address-display">
+                                <span style="color: var(--accent)">📍</span>
+                                <span>24 Bowen Bridge Road, Bowen Hills QLD 4006</span>
+                            </div>
+                            <button class="maps-btn" onclick="window.open('https://maps.google.com/?q=Sullivan+Nicolaides+Pathology+24+Bowen+Bridge+Road+Bowen+Hills+QLD+4006')">
+                                <span>🧭</span> Navigate
+                            </button>
+                            ${createSlider('slider-specimensDroppedOff', 'Swipe to confirm drop-off', runsheetState.specimensDroppedOff, `Dropped off at ${runsheetState.specimensDroppedOff}`)}
+                        </div>
+                    </div>
+                </div>
+
+                ${runsheetState.specimensDroppedOff ? `
+                    <div class="summary-card">
+                        <div class="summary-title">Run Complete!</div>
+                        <div class="summary-row">
+                            <span class="summary-label">Total Stops</span>
+                            <span class="summary-value">${completedStops}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Estimated Earnings</span>
+                            <span class="summary-value-accent">$${(48 + completedStops * 12).toFixed(2)}</span>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('runsheet-content').innerHTML = html;
+        }
+
+        // Profile Tab
+        function setEmploymentType(type) {
+            profile.employmentType = type;
+            renderProfile();
+        }
+
+        function setProfileSection(section) {
+            activeProfileSection = section;
+            renderProfile();
+        }
+
+        function renderProfile() {
+            const expiringDocs = documents.filter(d => d.status === 'expiring' || d.status === 'expired');
+            const isContractor = profile.employmentType === 'contractor';
+            const displayDocs = isContractor ? documents : documents.filter(d => d.name !== 'Public Liability Insurance' && d.name !== 'ABN');
+
+            let html = `
+                <!-- Profile Card -->
+                <div class="profile-card">
+                    <div class="avatar">👤</div>
+                    <div class="profile-name">${profile.name}</div>
+                    <div class="contact-row">📞 ${profile.phone}</div>
+                    <div class="contact-row">✉️ ${profile.email}</div>
+                    <div class="employment-toggle">
+                        <div class="employment-label">Employment Type</div>
+                        <div class="employment-options">
+                            <button class="employment-btn ${isContractor ? 'active' : ''}" onclick="setEmploymentType('contractor')">Contractor</button>
+                            <button class="employment-btn ${!isContractor ? 'active' : ''}" onclick="setEmploymentType('employee')">Employee</button>
+                        </div>
+                    </div>
+                </div>
+
+                ${expiringDocs.length > 0 ? `
+                    <div class="alert-banner">
+                        <span>⚠️</span>
+                        <span class="alert-text">${expiringDocs.length} document(s) expiring or expired</span>
+                    </div>
+                ` : ''}
+
+                <!-- Section Tabs -->
+                <div class="section-tabs">
+                    <button class="section-tab ${activeProfileSection === 'documents' ? 'active' : ''}" onclick="setProfileSection('documents')">Documents</button>
+                    <button class="section-tab ${activeProfileSection === 'earnings' ? 'active' : ''}" onclick="setProfileSection('earnings')">Earnings</button>
+                    <button class="section-tab ${activeProfileSection === 'reports' ? 'active' : ''}" onclick="setProfileSection('reports')">${isContractor ? 'Invoices' : 'Payslips'}</button>
+                </div>
+            `;
+
+            // Documents Section
+            if (activeProfileSection === 'documents') {
+                html += displayDocs.map(doc => `
+                    <div class="document-card">
+                        <div class="doc-icon">📄</div>
+                        <div class="doc-info">
+                            <div class="doc-name">${doc.name}</div>
+                            <div class="doc-expiry">Expires: ${doc.expiry ? formatDate(doc.expiry, 'dd MMM yyyy') : 'N/A'}</div>
+                        </div>
+                        <div class="doc-right">
+                            <span class="doc-status ${doc.status}">
+                                ${doc.status === 'valid' ? '✓ Valid' : doc.status === 'expiring' ? '⚠ Expiring Soon' : '✕ Expired'}
+                            </span>
+                            <button class="upload-btn" onclick="alert('Upload functionality')">⬆️</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Earnings Section
+            if (activeProfileSection === 'earnings') {
+                const maxAmount = Math.max(...profile.earningsHistory.map(h => h.amount));
+                html += `
+                    <div class="earnings-cards">
+                        <div class="earnings-card">
+                            <div class="earnings-label">This Week</div>
+                            <div class="earnings-value">$${profile.weeklyEarnings.toFixed(2)}</div>
+                        </div>
+                        <div class="earnings-card">
+                            <div class="earnings-label">This Month</div>
+                            <div class="earnings-value">$${profile.monthlyEarnings.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Weekly Earnings (Last 8 Weeks)</div>
+                        <div class="bar-chart">
+                            ${profile.earningsHistory.map((item, i) => `
+                                <div class="bar-wrapper">
+                                    <div class="bar-background">
+                                        <div class="bar" style="height: ${(item.amount / maxAmount) * 100}%"></div>
+                                    </div>
+                                    <div class="bar-label">W${i + 1}</div>
+                                    <div class="bar-value">$${item.amount}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Reports Section
+            if (activeProfileSection === 'reports') {
+                if (isContractor) {
+                    html += `<div class="reports-title">Tax Invoices</div>`;
+                    html += taxInvoices.map(inv => `
+                        <div class="report-card">
+                            <div class="report-header">
+                                <span class="report-number">${inv.number}</span>
+                                <button class="download-btn" onclick="alert('Download PDF')">⬇️</button>
+                            </div>
+                            <div class="report-period">${inv.period}</div>
+                            <div class="report-details">
+                                <div class="report-row">
+                                    <span class="report-label">Runs Completed</span>
+                                    <span class="report-value">${inv.runs}</span>
+                                </div>
+                                <div class="report-row">
+                                    <span class="report-label">Total Amount</span>
+                                    <span class="report-value">$${inv.amount.toFixed(2)}</span>
+                                </div>
+                                <div class="report-row">
+                                    <span class="report-label">GST</span>
+                                    <span class="report-value">$${inv.gst.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    html += `<div class="reports-title">Payslips</div>`;
+                    html += payslips.map(pay => `
+                        <div class="report-card">
+                            <div class="report-header">
+                                <span class="report-number">${pay.period}</span>
+                                <button class="download-btn" onclick="alert('Download PDF')">⬇️</button>
+                            </div>
+                            <div class="report-details">
+                                <div class="report-row">
+                                    <span class="report-label">Gross Pay</span>
+                                    <span class="report-value">$${pay.gross.toFixed(2)}</span>
+                                </div>
+                                <div class="report-row">
+                                    <span class="report-label">Tax Withheld</span>
+                                    <span class="report-value">-$${pay.tax.toFixed(2)}</span>
+                                </div>
+                                <div class="report-row">
+                                    <span class="report-label">Superannuation</span>
+                                    <span class="report-value">$${pay.super.toFixed(2)}</span>
+                                </div>
+                                <div class="report-row">
+                                    <span class="report-label-bold">Net Pay</span>
+                                    <span class="report-value-accent">$${pay.net.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            document.getElementById('profile-content').innerHTML = html;
+        }
+
+        // Initialize
+        renderJobsTab();
+    </script>
+</body>
+</html>
