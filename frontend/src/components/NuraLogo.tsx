@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, G } from 'react-native-svg';
 import { COLORS } from '../constants/theme';
 
 interface NuraLogoProps {
@@ -8,27 +8,36 @@ interface NuraLogoProps {
 }
 
 export const NuraLogo: React.FC<NuraLogoProps> = ({ size = 40 }) => {
-  const scale = size / 40;
+  // The Nura logo has two interleaving diagonal strokes forming an abstract "N":
+  // - Navy (back): diagonal going from top-left to bottom-right, with a small dot at its top-right
+  // - Mint (front): diagonal going from bottom-left to top-right, with a small dot at its bottom-left
   
   return (
     <View style={styles.container}>
-      <Svg width={size} height={size} viewBox="0 0 40 40">
-        {/* Navy diagonal */}
-        <Path
-          d="M8 8 L16 8 L28 28 L20 28 Z"
-          fill={COLORS.primary}
-        />
-        {/* Mint diagonal */}
-        <Path
-          d="M12 32 L20 32 L32 12 L24 12 Z"
-          fill={COLORS.accent}
-        />
-        {/* Navy dot */}
-        <Circle cx="8" cy="8" r="4" fill={COLORS.primary} />
-        {/* Mint dot */}
-        <Circle cx="12" cy="32" r="4" fill={COLORS.accent} />
+      <Svg width={size} height={size} viewBox="0 0 50 50">
+        {/* Navy diagonal - background layer, goes from upper-left toward lower-right */}
+        <G>
+          {/* Main diagonal bar */}
+          <Path
+            d="M8 5 L16 5 L16 8 L35 38 L35 45 L27 45 L27 42 L10 14 L10 5 Z"
+            fill={COLORS.primary}
+          />
+          {/* Navy dot at top-right */}
+          <Circle cx="38" cy="8" r="5" fill={COLORS.primary} />
+        </G>
+        
+        {/* Mint diagonal - foreground layer, goes from lower-left toward upper-right */}
+        <G>
+          {/* Main diagonal bar */}
+          <Path
+            d="M15 45 L23 45 L23 42 L40 14 L40 5 L42 5 L42 45 L35 45 L35 38 L20 12 L20 5 L15 5 Z"
+            fill={COLORS.accent}
+          />
+          {/* Mint dot at bottom-left */}
+          <Circle cx="12" cy="42" r="5" fill={COLORS.accent} />
+        </G>
       </Svg>
-      <Text style={[styles.text, { fontSize: size * 0.6 }]}>nura</Text>
+      <Text style={[styles.text, { fontSize: size * 0.52 }]}>nura</Text>
     </View>
   );
 };
@@ -40,8 +49,8 @@ const styles = StyleSheet.create({
   },
   text: {
     color: COLORS.text,
-    fontWeight: '400',
-    marginLeft: 4,
+    fontWeight: '300',
+    marginLeft: 1,
     letterSpacing: 0.5,
   },
 });
