@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  TextInput,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +18,10 @@ import {
   sarahChenProfile,
   taxInvoices,
   payslips,
+  leaveBalance,
+  leaveRequests,
 } from '../../src/data/sampleData';
+import { LeaveType, LeaveStatus, LeaveRequest } from '../../src/types';
 
 // Simple Bar Chart Component
 const SimpleBarChart: React.FC<{ data: { week: string; amount: number }[] }> = ({ data }) => {
@@ -73,7 +78,7 @@ const chartStyles = StyleSheet.create({
     borderRadius: 4,
   },
   barLabel: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 10,
     marginTop: 4,
   },
@@ -84,20 +89,55 @@ const chartStyles = StyleSheet.create({
   },
 });
 
+// Leave Status Badge Component
+const LeaveStatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
+  const getStatusStyle = () => {
+    switch (status) {
+      case 'approved':
+        return { bg: 'rgba(128, 229, 203, 0.2)', color: COLORS.accent };
+      case 'pending':
+        return { bg: 'rgba(255, 183, 77, 0.2)', color: COLORS.warning };
+      case 'declined':
+        return { bg: 'rgba(244, 67, 54, 0.2)', color: COLORS.error };
+      default:
+        return { bg: COLORS.card, color: COLORS.muted };
+    }
+  };
+
+  const style = getStatusStyle();
+  
+  return (
+    <View style={[leaveStyles.statusBadge, { backgroundColor: style.bg }]}>
+      <Text style={[leaveStyles.statusBadgeText, { color: style.color }]}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Text>
+    </View>
+  );
+};
+
+// Leave Type Label
+const getLeaveTypeLabel = (type: LeaveType): string => {
+  switch (type) {
+    case 'annual': return 'Annual Leave';
+    case 'sick': return 'Sick Leave';
+    case 'personal': return 'Personal Leave';
+    case 'other': return 'Other';
+    default: return type;
+  }
+};
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(sarahChenProfile);
-  const [activeSection, setActiveSection] = useState<'documents' | 'earnings' | 'reports'>('documents');
-
-  const toggleEmploymentType = () => {
-    setProfile({
-      ...profile,
-      employmentType:
-        profile.employmentType === 'independent_contractor'
-          ? 'full_time_employee'
-          : 'independent_contractor',
-    });
-  };
+  const [activeSection, setActiveSection] = useState<'documents' | 'earnings' | 'reports' | 'leave'>('documents');
+  
+  // Leave form state
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [leaveType, setLeaveType] = useState<LeaveType>('annual');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [leaveReason, setLeaveReason] = useState('');
+  const [leaveHistory, setLeaveHistory] = useState<LeaveRequest[]>(leaveRequests);
 
   const handleDocumentUpload = (docId: string) => {
     Alert.alert('Upload Document', 'Document upload functionality would open here.');
@@ -115,13 +155,53 @@ export default function ProfileScreen() {
     (doc) => doc.status === 'expiring_soon' || doc.status === 'expired'
   );
 
-  // Chart data is directly used from profile.earningsHistory
-
   const isContractor = profile.employmentType === 'independent_contractor';
   const contractorDocs = profile.documents.filter(
     (doc) => doc.type !== 'insurance' && doc.type !== 'abn'
   );
   const allDocs = isContractor ? profile.documents : contractorDocs;
+
+  // Calculate working days between dates (Mon-Fri)
+  const calculateWorkingDays = (start: string, end: string): number => {
+    // Simple mock calculation - would need proper date parsing
+    if (!start || !end) return 0;
+    // Just return a placeholder for demo
+    return 5;
+  };
+
+  const handleSubmitLeave = () => {
+    if (!startDate || !endDate) {
+      Alert.alert('Error', 'Please enter start and end dates.');
+      return;
+    }
+    
+    if ((leaveType === 'sick' || leaveType === 'personal') && !leaveReason) {
+      Alert.alert('Error', 'Reason is required for sick and personal leave.');
+      return;
+    }
+
+    const newRequest: LeaveRequest = {
+      id: `leave-${Date.now()}`,
+      type: leaveType,
+      startDate,
+      endDate,
+      duration: calculateWorkingDays(startDate, endDate),
+      reason: leaveReason,
+      status: 'pending',
+    };
+
+    setLeaveHistory([newRequest, ...leaveHistory]);
+    setShowLeaveForm(false);
+    setStartDate('');
+    setEndDate('');
+    setLeaveReason('');
+    Alert.alert('Success', 'Leave request submitted successfully!');
+  };
+
+  // Section tabs - include Leave only for employees
+  const sectionTabs = isContractor 
+    ? ['documents', 'earnings', 'reports'] as const
+    : ['documents', 'earnings', 'reports', 'leave'] as const;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -145,11 +225,11 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.profileName}>{profile.name}</Text>
           <View style={styles.contactRow}>
-            <Ionicons name="call" size={16} color={COLORS.textSecondary} />
+            <Ionicons name="call" size={16} color={COLORS.muted} />
             <Text style={styles.contactText}>{profile.phone}</Text>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="mail" size={16} color={COLORS.textSecondary} />
+            <Ionicons name="mail" size={16} color={COLORS.muted} />
             <Text style={styles.contactText}>{profile.email}</Text>
           </View>
 
@@ -256,6 +336,24 @@ export default function ProfileScreen() {
               {isContractor ? 'Invoices' : 'Payslips'}
             </Text>
           </TouchableOpacity>
+          {!isContractor && (
+            <TouchableOpacity
+              style={[
+                styles.sectionTab,
+                activeSection === 'leave' && styles.sectionTabActive,
+              ]}
+              onPress={() => setActiveSection('leave')}
+            >
+              <Text
+                style={[
+                  styles.sectionTabText,
+                  activeSection === 'leave' && styles.sectionTabTextActive,
+                ]}
+              >
+                Leave
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Section B: Documents */}
@@ -383,6 +481,146 @@ export default function ProfileScreen() {
             )}
           </View>
         )}
+
+        {/* Section E: Leave (Employees Only) */}
+        {activeSection === 'leave' && !isContractor && (
+          <View style={styles.section}>
+            {/* Leave Balance Cards */}
+            <View style={leaveStyles.balanceContainer}>
+              <View style={leaveStyles.balanceCard}>
+                <Text style={leaveStyles.balanceLabel}>Annual Leave</Text>
+                <Text style={leaveStyles.balanceValue}>{leaveBalance.annual}</Text>
+                <Text style={leaveStyles.balanceSubtext}>days left</Text>
+              </View>
+              <View style={leaveStyles.balanceCard}>
+                <Text style={leaveStyles.balanceLabel}>Sick Leave</Text>
+                <Text style={leaveStyles.balanceValue}>{leaveBalance.sick}</Text>
+                <Text style={leaveStyles.balanceSubtext}>days left</Text>
+              </View>
+              <View style={leaveStyles.balanceCard}>
+                <Text style={leaveStyles.balanceLabel}>Personal Leave</Text>
+                <Text style={leaveStyles.balanceValue}>{leaveBalance.personal}</Text>
+                <Text style={leaveStyles.balanceSubtext}>days left</Text>
+              </View>
+            </View>
+
+            {/* Apply for Leave Button */}
+            {!showLeaveForm && (
+              <TouchableOpacity
+                style={leaveStyles.applyButton}
+                onPress={() => setShowLeaveForm(true)}
+              >
+                <Ionicons name="add-circle" size={20} color={COLORS.background} />
+                <Text style={leaveStyles.applyButtonText}>Apply for Leave</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Leave Application Form */}
+            {showLeaveForm && (
+              <View style={leaveStyles.formContainer}>
+                <View style={leaveStyles.formHeader}>
+                  <Text style={leaveStyles.formTitle}>Leave Application</Text>
+                  <TouchableOpacity onPress={() => setShowLeaveForm(false)}>
+                    <Ionicons name="close" size={24} color={COLORS.muted} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Leave Type Selector */}
+                <Text style={leaveStyles.inputLabel}>Leave Type</Text>
+                <View style={leaveStyles.typeSelector}>
+                  {(['annual', 'sick', 'personal', 'other'] as LeaveType[]).map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        leaveStyles.typeButton,
+                        leaveType === type && leaveStyles.typeButtonActive,
+                      ]}
+                      onPress={() => setLeaveType(type)}
+                    >
+                      <Text
+                        style={[
+                          leaveStyles.typeButtonText,
+                          leaveType === type && leaveStyles.typeButtonTextActive,
+                        ]}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Date Inputs */}
+                <Text style={leaveStyles.inputLabel}>Start Date</Text>
+                <TextInput
+                  style={leaveStyles.textInput}
+                  placeholder="DD/MM/YYYY"
+                  placeholderTextColor={COLORS.muted}
+                  value={startDate}
+                  onChangeText={setStartDate}
+                />
+
+                <Text style={leaveStyles.inputLabel}>End Date</Text>
+                <TextInput
+                  style={leaveStyles.textInput}
+                  placeholder="DD/MM/YYYY"
+                  placeholderTextColor={COLORS.muted}
+                  value={endDate}
+                  onChangeText={setEndDate}
+                />
+
+                {/* Duration Display */}
+                {startDate && endDate && (
+                  <Text style={leaveStyles.durationText}>
+                    Duration: {calculateWorkingDays(startDate, endDate)} working days
+                  </Text>
+                )}
+
+                {/* Reason Input */}
+                <Text style={leaveStyles.inputLabel}>
+                  Reason / Notes {(leaveType === 'sick' || leaveType === 'personal') && (
+                    <Text style={leaveStyles.requiredText}>*required</Text>
+                  )}
+                </Text>
+                <TextInput
+                  style={[leaveStyles.textInput, leaveStyles.textArea]}
+                  placeholder="Enter reason..."
+                  placeholderTextColor={COLORS.muted}
+                  value={leaveReason}
+                  onChangeText={setLeaveReason}
+                  multiline
+                  numberOfLines={3}
+                />
+
+                {/* Submit Button */}
+                <TouchableOpacity
+                  style={leaveStyles.submitButton}
+                  onPress={handleSubmitLeave}
+                >
+                  <Text style={leaveStyles.submitButtonText}>Submit Leave Request</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Leave Request History */}
+            <Text style={leaveStyles.historyTitle}>Leave History</Text>
+            {leaveHistory.map((request) => (
+              <View key={request.id} style={leaveStyles.historyCard}>
+                <View style={leaveStyles.historyHeader}>
+                  <Text style={leaveStyles.historyType}>
+                    {getLeaveTypeLabel(request.type)}
+                  </Text>
+                  <LeaveStatusBadge status={request.status} />
+                </View>
+                <Text style={leaveStyles.historyDates}>
+                  {request.startDate} – {request.endDate}
+                </Text>
+                <Text style={leaveStyles.historyDuration}>
+                  {request.duration} days
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -414,13 +652,13 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xl * 2,
   },
   profileCard: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.card,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.lg,
     alignItems: 'center',
     marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: 'rgba(128, 229, 203, 0.2)',
+    borderColor: COLORS.border,
   },
   avatarContainer: {
     marginBottom: SPACING.md,
@@ -448,7 +686,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   contactText: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 14,
   },
   employmentTypeContainer: {
@@ -456,10 +694,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(128, 229, 203, 0.2)',
+    borderTopColor: COLORS.border,
   },
   employmentLabel: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 12,
     marginBottom: SPACING.sm,
     textAlign: 'center',
@@ -480,7 +718,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
   employmentOptionText: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -505,7 +743,7 @@ const styles = StyleSheet.create({
   },
   sectionTabs: {
     flexDirection: 'row',
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.card,
     borderRadius: BORDER_RADIUS.sm,
     padding: 4,
     marginBottom: SPACING.md,
@@ -520,8 +758,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
   sectionTabText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
+    color: COLORS.muted,
+    fontSize: 12,
     fontWeight: '600',
   },
   sectionTabTextActive: {
@@ -537,15 +775,15 @@ const styles = StyleSheet.create({
   },
   earningsCard: {
     flex: 1,
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.card,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(128, 229, 203, 0.2)',
+    borderColor: COLORS.border,
   },
   earningsLabel: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 12,
     marginBottom: SPACING.xs,
   },
@@ -555,11 +793,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   chartContainer: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.card,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: 'rgba(128, 229, 203, 0.2)',
+    borderColor: COLORS.border,
   },
   chartTitle: {
     color: COLORS.text,
@@ -574,12 +812,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   reportCard: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.card,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(128, 229, 203, 0.2)',
+    borderColor: COLORS.border,
   },
   reportHeader: {
     flexDirection: 'row',
@@ -596,13 +834,13 @@ const styles = StyleSheet.create({
     padding: SPACING.xs,
   },
   reportPeriod: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 14,
     marginBottom: SPACING.sm,
   },
   reportDetails: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(128, 229, 203, 0.2)',
+    borderTopColor: COLORS.border,
     paddingTop: SPACING.sm,
   },
   reportRow: {
@@ -611,7 +849,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   reportLabel: {
-    color: COLORS.textSecondary,
+    color: COLORS.muted,
     fontSize: 14,
   },
   reportLabelBold: {
@@ -627,5 +865,181 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: 16,
     fontWeight: '700',
+  },
+});
+
+const leaveStyles = StyleSheet.create({
+  balanceContainer: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  balanceCard: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  balanceLabel: {
+    color: COLORS.muted,
+    fontSize: 10,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  balanceValue: {
+    color: COLORS.accent,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  balanceSubtext: {
+    color: COLORS.muted,
+    fontSize: 10,
+  },
+  applyButton: {
+    backgroundColor: COLORS.accent,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  },
+  applyButtonText: {
+    color: COLORS.background,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  formContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  formHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  formTitle: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  inputLabel: {
+    color: COLORS.muted,
+    fontSize: 12,
+    marginBottom: SPACING.xs,
+    marginTop: SPACING.sm,
+  },
+  requiredText: {
+    color: COLORS.error,
+    fontSize: 10,
+  },
+  typeSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  typeButton: {
+    backgroundColor: COLORS.background,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  typeButtonActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  typeButtonText: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  typeButtonTextActive: {
+    color: COLORS.background,
+  },
+  textInput: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.md,
+    color: COLORS.text,
+    fontSize: 14,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  durationText: {
+    color: COLORS.muted,
+    fontSize: 12,
+    marginTop: SPACING.xs,
+    fontStyle: 'italic',
+  },
+  submitButton: {
+    backgroundColor: COLORS.accent,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+    marginTop: SPACING.md,
+  },
+  submitButtonText: {
+    color: COLORS.background,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  historyTitle: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: SPACING.md,
+  },
+  historyCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  historyType: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  historyDates: {
+    color: COLORS.muted,
+    fontSize: 14,
+  },
+  historyDuration: {
+    color: COLORS.accent,
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: SPACING.xs,
+  },
+  statusBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

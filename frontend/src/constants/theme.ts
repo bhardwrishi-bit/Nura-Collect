@@ -2,20 +2,24 @@ export const COLORS = {
   primary: '#2B3879',      // Deep navy blue
   accent: '#80E5CB',       // Mint/teal green
   background: '#00001E',   // Near black navy
-  cardBackground: '#2B3879',
+  card: '#0D1240',         // Card background
+  cardBackground: '#0D1240', // Alias for card background
+  card2: '#171F52',        // Secondary card bg
   text: '#FFFFFF',
-  textSecondary: '#A0A0B0',
+  textSecondary: '#8A8FAD', // Muted text alias
+  muted: '#8A8FAD',
   success: '#4CAF50',
   warning: '#FFB74D',
   error: '#F44336',
-  disabled: '#4A4A6A',
+  border: 'rgba(128,229,203,0.15)',
+  accentDim: 'rgba(128,229,203,0.1)',
 };
 
 export const FONTS = {
-  regular: 'Lexend_400Regular',
-  medium: 'Lexend_500Medium',
-  semiBold: 'Lexend_600SemiBold',
-  bold: 'Lexend_700Bold',
+  regular: 'Lexend-Regular',
+  medium: 'Lexend-Medium',
+  semiBold: 'Lexend-SemiBold',
+  bold: 'Lexend-Bold',
 };
 
 export const SPACING = {
@@ -28,7 +32,8 @@ export const SPACING = {
 
 export const BORDER_RADIUS = {
   sm: 8,
-  md: 16,
-  lg: 24,
+  md: 12,
+  lg: 16,
+  xl: 20,
   full: 9999,
 };

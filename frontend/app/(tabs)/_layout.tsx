@@ -13,7 +13,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: COLORS.cardBackground,
+          backgroundColor: COLORS.card,
           borderTopColor: 'rgba(128, 229, 203, 0.2)',
           borderTopWidth: 1,
           height: 60 + insets.bottom,
@@ -21,9 +21,9 @@ export default function TabLayout() {
           paddingTop: 8,
         },
         tabBarActiveTintColor: COLORS.accent,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarInactiveTintColor: COLORS.muted,
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
         },
       }}
@@ -42,7 +42,16 @@ export default function TabLayout() {
         options={{
           title: 'Runsheet',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list" size={size} color={color} />
+            <Ionicons name="clipboard" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="availability"
+        options={{
+          title: 'Availability',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" size={size} color={color} />
           ),
         }}
       />

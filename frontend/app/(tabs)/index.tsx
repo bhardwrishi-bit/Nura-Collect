@@ -21,7 +21,7 @@ export default function JobsScreen() {
   
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const jobs = generateWeeklyJobs();
+  const jobs = generateWeeklyJobs(weekStart);
 
   const selectedDateJobs = jobs.filter(
     (job) => job.date === format(selectedDate, 'EEE, dd MMM')

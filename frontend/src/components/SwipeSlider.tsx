@@ -7,13 +7,11 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { COLORS, BORDER_RADIUS } from '../constants/theme';
 
-const SLIDER_WIDTH = Dimensions.get('window').width - 64;
-const THUMB_SIZE = 56;
-const SLIDER_HEIGHT = 60;
+const SLIDER_HEIGHT = 56;
+const THUMB_SIZE = 48;
 
 interface SwipeSliderProps {
   label: string;
@@ -32,8 +30,9 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const [isComplete, setIsComplete] = useState(completed);
+  const [sliderWidth, setSliderWidth] = useState(Dimensions.get('window').width - 32);
 
-  const maxSlide = SLIDER_WIDTH - THUMB_SIZE - 8;
+  const maxSlide = sliderWidth - THUMB_SIZE - 8;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -68,16 +67,15 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
     })
   ).current;
 
-  const backgroundOpacity = translateX.interpolate({
+  const progressWidth = translateX.interpolate({
     inputRange: [0, maxSlide],
-    outputRange: [0, 1],
+    outputRange: ['0%', '100%'],
   });
 
   if (isComplete || completed) {
     return (
       <View style={[styles.container, styles.completedContainer]}>
-        <Ionicons name="checkmark-circle" size={24} color={COLORS.accent} />
-        <Text style={styles.completedText}>{completedLabel}</Text>
+        <Text style={styles.completedText}>✓ {completedLabel}</Text>
       </View>
     );
   }
@@ -85,17 +83,23 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
   if (disabled) {
     return (
       <View style={[styles.container, styles.disabledContainer]}>
-        <Text style={styles.disabledText}>{label}</Text>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.disabledThumb}>
+          <Text style={styles.thumbIcon}>›</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View 
+      style={styles.container}
+      onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
+    >
       <Animated.View
         style={[
           styles.progressBackground,
-          { opacity: backgroundOpacity },
+          { width: progressWidth },
         ]}
       />
       <Text style={styles.label}>{label}</Text>
@@ -106,7 +110,7 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
         ]}
         {...panResponder.panHandlers}
       >
-        <Ionicons name="chevron-forward" size={24} color={COLORS.text} />
+        <Text style={styles.thumbIcon}>›</Text>
       </Animated.View>
     </View>
   );
@@ -117,19 +121,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: SLIDER_HEIGHT,
     backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: 28,
     justifyContent: 'center',
-    paddingHorizontal: 8,
     overflow: 'hidden',
+    marginBottom: 8,
   },
   progressBackground: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
     backgroundColor: COLORS.accent,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: 28,
+    opacity: 0.8,
   },
   label: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
     marginLeft: THUMB_SIZE,
@@ -137,38 +145,48 @@ const styles = StyleSheet.create({
   thumb: {
     position: 'absolute',
     left: 4,
+    top: 4,
     width: THUMB_SIZE,
-    height: THUMB_SIZE - 8,
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
+    height: THUMB_SIZE,
+    backgroundColor: COLORS.accent,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.accent,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  thumbIcon: {
+    fontSize: 20,
+    color: COLORS.primary,
+    fontWeight: '700',
   },
   completedContainer: {
-    backgroundColor: 'rgba(128, 229, 203, 0.2)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    backgroundColor: 'rgba(76,175,80,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(76,175,80,0.3)',
   },
   completedText: {
-    color: COLORS.accent,
-    fontSize: 14,
+    color: COLORS.success,
+    fontSize: 13,
     fontWeight: '600',
+    textAlign: 'center',
   },
   disabledContainer: {
-    backgroundColor: COLORS.disabled,
-    opacity: 0.5,
+    opacity: 0.4,
   },
-  disabledText: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
+  disabledThumb: {
+    position: 'absolute',
+    left: 4,
+    top: 4,
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    backgroundColor: COLORS.accent,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.5,
   },
 });

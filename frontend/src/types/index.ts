@@ -1,6 +1,7 @@
 export interface Job {
   id: string;
   date: string;
+  fullDate: Date;
   timeSlot: string;
   suburb: string;
   address: string;
@@ -48,6 +49,7 @@ export interface Document {
   expiryDate: string;
   status: 'valid' | 'expiring_soon' | 'expired';
   fileUrl?: string;
+  icon?: string;
 }
 
 export interface Profile {
@@ -67,4 +69,40 @@ export interface SliderAction {
   action: string;
   timestamp: string;
   coordinates?: { lat: number; lng: number };
+}
+
+// Availability types
+export type AvailabilityStatus = 'available' | 'am_only' | 'pm_only' | 'unavailable' | 'not_set';
+
+export interface DayAvailability {
+  date: Date;
+  status: AvailabilityStatus;
+}
+
+export interface WeekAvailability {
+  weekNumber: number;
+  startDate: Date;
+  endDate: Date;
+  days: DayAvailability[];
+  submitted: boolean;
+}
+
+// Leave types
+export type LeaveType = 'annual' | 'sick' | 'personal' | 'other';
+export type LeaveStatus = 'pending' | 'approved' | 'declined';
+
+export interface LeaveBalance {
+  annual: number;
+  sick: number;
+  personal: number;
+}
+
+export interface LeaveRequest {
+  id: string;
+  type: LeaveType;
+  startDate: string;
+  endDate: string;
+  duration: number;
+  reason?: string;
+  status: LeaveStatus;
 }
