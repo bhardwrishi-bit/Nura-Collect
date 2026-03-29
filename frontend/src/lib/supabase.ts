@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase Configuration - Read from environment variables
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://yxoqvzypgvkdabqnwacs.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4b3F2enlwZ3ZrZGFicW53YWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzAzODUsImV4cCI6MjA5MDM0NjM4NX0.ilvfIOE-xLa_UnECHBr1SubljFTDHKqP_Ubbf00fJXQ';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Hardcoded test UUIDs for now
 export const TEST_JOB_ID = '00000000-0000-0000-0000-000000000001';
