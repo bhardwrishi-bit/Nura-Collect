@@ -13,6 +13,7 @@ import { format, addDays, startOfWeek, isBefore, isToday, isSameDay, addWeeks } 
 import { COLORS, SPACING, BORDER_RADIUS } from '../../src/constants/theme';
 import { NuraLogo } from '../../src/components/NuraLogo';
 import { AvailabilityStatus } from '../../src/types';
+import { insertAvailability } from '../../src/lib/supabase';
 
 interface DayAvailability {
   date: Date;
@@ -130,15 +131,33 @@ export default function AvailabilityScreen() {
     return summary.available > 0 || summary.unavailable > 0;
   };
 
-  const handleSubmit = () => {
-    const newWeeks = [...weeks];
-    newWeeks[currentWeekIndex].submitted = true;
-    setWeeks(newWeeks);
+  const handleSubmit = async () => {
+    // Prepare availability data for Supabase
+    const daysToSubmit = currentWeek.days
+      .filter((day) => !isPastDay(day.date) && day.status !== 'not_set')
+      .map((day) => ({
+        date: day.date,
+        slot: day.status === 'available' ? 'full_day' : day.status,
+      }));
+
+    // Fire and forget - Supabase call
+    const result = await insertAvailability(daysToSubmit, currentWeek.startDate);
     
-    const weekRange = `${format(currentWeek.startDate, 'dd MMM')} - ${format(currentWeek.endDate, 'dd MMM')}`;
-    setToastMessage(`Availability submitted for ${weekRange}`);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    if (result.success) {
+      const newWeeks = [...weeks];
+      newWeeks[currentWeekIndex].submitted = true;
+      setWeeks(newWeeks);
+      
+      const weekRange = `${format(currentWeek.startDate, 'dd MMM')} - ${format(currentWeek.endDate, 'dd MMM')}`;
+      setToastMessage(`Availability submitted for ${weekRange}`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } else {
+      // Show error toast
+      setToastMessage(result.error || 'Failed to save — please try again');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    }
   };
 
   const summary = getStatusSummary();

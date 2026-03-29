@@ -17,6 +17,7 @@ import { SwipeSlider } from '../../src/components/SwipeSlider';
 import { PatientStopCard } from '../../src/components/PatientStopCard';
 import { todaysRunsheet } from '../../src/data/sampleData';
 import { PatientStop } from '../../src/types';
+import { insertRunsheetEvent, RUNSHEET_EVENT_TYPES } from '../../src/lib/supabase';
 
 const CHECKLIST_ITEMS = [
   { id: 'badge', label: 'ID badge worn' },
@@ -39,16 +40,22 @@ export default function RunsheetScreen() {
   const handleShiftStart = () => {
     const timestamp = format(new Date(), 'h:mm a');
     setRunsheet({ ...runsheet, shiftStarted: timestamp });
+    // Fire and forget - Supabase call
+    insertRunsheetEvent(RUNSHEET_EVENT_TYPES.SHIFT_START, null);
   };
 
   const handlePrintablesCollected = () => {
     const timestamp = format(new Date(), 'h:mm a');
     setRunsheet({ ...runsheet, printablesCollected: timestamp });
+    // Fire and forget - Supabase call
+    insertRunsheetEvent(RUNSHEET_EVENT_TYPES.PRINTABLES_COLLECTED, null);
   };
 
   const handleChecklistComplete = () => {
     const timestamp = format(new Date(), 'h:mm a');
     setRunsheet({ ...runsheet, checklistCompleted: timestamp });
+    // Fire and forget - Supabase call
+    insertRunsheetEvent(RUNSHEET_EVENT_TYPES.CHECKLIST_COMPLETE, null);
   };
 
   const handlePatientArrive = (stopId: string) => {
@@ -58,6 +65,8 @@ export default function RunsheetScreen() {
         stop.id === stopId ? { ...stop, arrivedAt: timestamp } : stop
       )
     );
+    // Fire and forget - Supabase call
+    insertRunsheetEvent(RUNSHEET_EVENT_TYPES.ARRIVED_AT_STOP, stopId);
   };
 
   const handlePatientComplete = (stopId: string) => {
@@ -67,6 +76,8 @@ export default function RunsheetScreen() {
         stop.id === stopId ? { ...stop, completedAt: timestamp } : stop
       )
     );
+    // Fire and forget - Supabase call
+    insertRunsheetEvent(RUNSHEET_EVENT_TYPES.COLLECTION_COMPLETE, stopId);
   };
 
   const handleNotesChange = (stopId: string, notes: string) => {
@@ -80,6 +91,8 @@ export default function RunsheetScreen() {
   const handleDropOff = () => {
     const timestamp = format(new Date(), 'h:mm a');
     setRunsheet({ ...runsheet, specimensDroppedOff: timestamp });
+    // Fire and forget - Supabase call
+    insertRunsheetEvent(RUNSHEET_EVENT_TYPES.SPECIMENS_DROPPED_OFF, null);
   };
 
   const openMaps = (address: string) => {

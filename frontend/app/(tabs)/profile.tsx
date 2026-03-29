@@ -22,6 +22,8 @@ import {
   leaveRequests,
 } from '../../src/data/sampleData';
 import { LeaveType, LeaveStatus, LeaveRequest } from '../../src/types';
+import { uploadDocument, insertLeaveRequest } from '../../src/lib/supabase';
+import * as DocumentPicker from 'expo-document-picker';
 
 // Simple Bar Chart Component
 const SimpleBarChart: React.FC<{ data: { week: string; amount: number }[] }> = ({ data }) => {
@@ -138,9 +140,46 @@ export default function ProfileScreen() {
   const [endDate, setEndDate] = useState('');
   const [leaveReason, setLeaveReason] = useState('');
   const [leaveHistory, setLeaveHistory] = useState<LeaveRequest[]>(leaveRequests);
+  
+  // Toast state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
-  const handleDocumentUpload = (docId: string) => {
-    Alert.alert('Upload Document', 'Document upload functionality would open here.');
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const handleDocumentUpload = async (docId: string, docType: string) => {
+    try {
+      // Open file picker
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/*'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const file = result.assets[0];
+      
+      // Fire and forget - Supabase upload
+      const uploadResult = await uploadDocument(
+        { uri: file.uri, name: file.name, type: file.mimeType || 'application/octet-stream' },
+        docType
+      );
+
+      if (uploadResult.success) {
+        showToastMessage('Document uploaded — pending review');
+      } else {
+        showToastMessage(uploadResult.error || 'Upload failed — please try again');
+      }
+    } catch (error) {
+      console.error('[Nura Supabase Error] handleDocumentUpload:', error);
+      showToastMessage('Upload failed — please try again');
+    }
   };
 
   const handleDownloadInvoice = (invoiceId: string) => {
@@ -169,7 +208,7 @@ export default function ProfileScreen() {
     return 5;
   };
 
-  const handleSubmitLeave = () => {
+  const handleSubmitLeave = async () => {
     if (!startDate || !endDate) {
       Alert.alert('Error', 'Please enter start and end dates.');
       return;
@@ -180,22 +219,37 @@ export default function ProfileScreen() {
       return;
     }
 
-    const newRequest: LeaveRequest = {
-      id: `leave-${Date.now()}`,
-      type: leaveType,
+    const workingDays = calculateWorkingDays(startDate, endDate);
+
+    // Fire and forget - Supabase call
+    const result = await insertLeaveRequest(
+      leaveType,
       startDate,
       endDate,
-      duration: calculateWorkingDays(startDate, endDate),
-      reason: leaveReason,
-      status: 'pending',
-    };
+      workingDays,
+      leaveReason
+    );
 
-    setLeaveHistory([newRequest, ...leaveHistory]);
-    setShowLeaveForm(false);
-    setStartDate('');
-    setEndDate('');
-    setLeaveReason('');
-    Alert.alert('Success', 'Leave request submitted successfully!');
+    if (result.success) {
+      const newRequest: LeaveRequest = {
+        id: `leave-${Date.now()}`,
+        type: leaveType,
+        startDate,
+        endDate,
+        duration: workingDays,
+        reason: leaveReason,
+        status: 'pending',
+      };
+
+      setLeaveHistory([newRequest, ...leaveHistory]);
+      setShowLeaveForm(false);
+      setStartDate('');
+      setEndDate('');
+      setLeaveReason('');
+      showToastMessage('Leave request submitted');
+    } else {
+      showToastMessage(result.error || 'Failed to submit — please try again');
+    }
   };
 
   // Section tabs - include Leave only for employees
@@ -363,7 +417,7 @@ export default function ProfileScreen() {
               <DocumentCard
                 key={doc.id}
                 document={doc}
-                onUpload={() => handleDocumentUpload(doc.id)}
+                onUpload={(docType) => handleDocumentUpload(doc.id, docType)}
               />
             ))}
           </View>
@@ -622,6 +676,14 @@ export default function ProfileScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Toast */}
+      {showToast && (
+        <View style={[styles.toast, { bottom: insets.bottom + 80 }]}>
+          <Ionicons name="checkmark-circle" size={20} color={COLORS.accent} />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -865,6 +927,24 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: 16,
     fontWeight: '700',
+  },
+  toast: {
+    position: 'absolute',
+    left: SPACING.md,
+    right: SPACING.md,
+    backgroundColor: COLORS.card,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  toastText: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

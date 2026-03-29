@@ -6,7 +6,7 @@ import { Document } from '../types';
 
 interface DocumentCardProps {
   document: Document;
-  onUpload: () => void;
+  onUpload: (docType: string) => void;
 }
 
 export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onUpload }) => {
@@ -67,7 +67,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onUpload }
             {getStatusLabel()}
           </Text>
         </View>
-        <TouchableOpacity style={styles.uploadButton} onPress={onUpload}>
+        <TouchableOpacity style={styles.uploadButton} onPress={() => onUpload(document.type)}>
           <Ionicons name="cloud-upload" size={18} color={COLORS.accent} />
         </TouchableOpacity>
       </View>
