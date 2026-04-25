@@ -15,8 +15,12 @@ export interface PatientStop {
   patientName: string;
   address: string;
   suburb: string;
-  tubes: string[];
-  accessories: string[];
+  tubes?: string[];
+  accessories?: string[];
+  time?: string;
+  phone?: string;
+  specialNotes?: string;
+  referralUploaded?: boolean;
   arrivedAt?: string;
   arrivedCoords?: { lat: number; lng: number };
   completedAt?: string;

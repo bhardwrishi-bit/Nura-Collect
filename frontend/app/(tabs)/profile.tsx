@@ -22,7 +22,8 @@ import {
   leaveRequests,
 } from '../../src/data/sampleData';
 import { LeaveType, LeaveStatus, LeaveRequest } from '../../src/types';
-import { uploadDocument, insertLeaveRequest } from '../../src/lib/supabase';
+import { uploadDocument, insertLeaveRequest, signOut } from '../../src/lib/supabase';
+import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 
 // Simple Bar Chart Component
@@ -130,6 +131,7 @@ const getLeaveTypeLabel = (type: LeaveType): string => {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [profile, setProfile] = useState(sarahChenProfile);
   const [activeSection, setActiveSection] = useState<'documents' | 'earnings' | 'reports' | 'leave'>('documents');
   
@@ -144,6 +146,11 @@ export default function ProfileScreen() {
   // Toast state
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/login');
+  };
 
   const showToastMessage = (message: string) => {
     setToastMessage(message);
@@ -675,6 +682,11 @@ export default function ProfileScreen() {
             ))}
           </View>
         )}
+        {/* Sign Out */}
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Toast */}
@@ -945,6 +957,20 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 14,
     fontWeight: '500',
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  signOutText: {
+    color: COLORS.error,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

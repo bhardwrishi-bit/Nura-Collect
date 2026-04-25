@@ -1,36 +1,100 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../src/constants/theme';
 import { NuraLogo } from '../../src/components/NuraLogo';
 import { JobCard } from '../../src/components/JobCard';
-import { generateWeeklyJobs } from '../../src/data/sampleData';
+import { getWeekBookings, getBrisbaneToday, Booking } from '../../src/lib/supabase';
+import { Job } from '../../src/types';
+
+// ── helpers ───────────────────────────────────────────────────────────────
+
+function extractSuburb(address: string): string {
+  const match = address.match(/,\s+([^,]+)\s+QLD\s+\d{4}/i);
+  return match ? match[1].trim() : '';
+}
+
+function formatTimeSlot(scheduled_time: string | null): string {
+  if (!scheduled_time) return 'Time TBC';
+  const [h, m] = scheduled_time.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return format(d, 'h:mm a');
+}
+
+function bookingToJob(booking: Booking, todayISO: string): Job {
+  // Parse date as local to avoid UTC-offset edge cases
+  const [y, mo, day] = booking.scheduled_date.split('-').map(Number);
+  const fullDate = new Date(y, mo - 1, day);
+
+  let status: Job['status'];
+  if (booking.scheduled_date < todayISO) {
+    status = 'completed';
+  } else if (booking.scheduled_date === todayISO) {
+    status = 'in_progress';
+  } else {
+    status = 'upcoming';
+  }
+
+  const suburb = extractSuburb(booking.address);
+
+  return {
+    id: booking.id,
+    date: format(fullDate, 'EEE, dd MMM'),
+    fullDate,
+    timeSlot: formatTimeSlot(booking.scheduled_time),
+    suburb: suburb || booking.address,
+    address: booking.address,
+    earnings: 12,
+    status,
+    patientName: `${booking.first_name} ${booking.last_name}`,
+  };
+}
+
+// ── screen ────────────────────────────────────────────────────────────────
 
 export default function JobsScreen() {
   const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const jobs = generateWeeklyJobs(weekStart);
+
+  const fetchWeek = useCallback(async (start: Date) => {
+    setLoading(true);
+    const startISO = format(start, 'yyyy-MM-dd');
+    const endISO = format(addDays(start, 6), 'yyyy-MM-dd');
+    const todayISO = getBrisbaneToday();
+    const bookings = await getWeekBookings(startISO, endISO);
+    setJobs(bookings.map((b) => bookingToJob(b, todayISO)));
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchWeek(weekStart);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart.toISOString()]);
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const days = direction === 'prev' ? -7 : 7;
+    setSelectedDate((d) => addDays(d, days));
+  };
 
   const selectedDateJobs = jobs.filter(
     (job) => job.date === format(selectedDate, 'EEE, dd MMM')
   );
-
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    const days = direction === 'prev' ? -7 : 7;
-    setSelectedDate(addDays(selectedDate, days));
-  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -115,7 +179,11 @@ export default function JobsScreen() {
           {format(selectedDate, 'EEEE, dd MMMM')}
         </Text>
 
-        {selectedDateJobs.length > 0 ? (
+        {loading ? (
+          <View style={styles.noJobsContainer}>
+            <ActivityIndicator size="large" color={COLORS.accent} />
+          </View>
+        ) : selectedDateJobs.length > 0 ? (
           selectedDateJobs.map((job) => (
             <JobCard
               key={job.id}
@@ -130,9 +198,7 @@ export default function JobsScreen() {
           <View style={styles.noJobsContainer}>
             <Ionicons name="calendar-outline" size={48} color={COLORS.textSecondary} />
             <Text style={styles.noJobsText}>No jobs scheduled</Text>
-            <Text style={styles.noJobsSubtext}>
-              Enjoy your day off!
-            </Text>
+            <Text style={styles.noJobsSubtext}>Enjoy your day off!</Text>
           </View>
         )}
       </ScrollView>

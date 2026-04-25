@@ -34,10 +34,17 @@ export const PatientStopCard: React.FC<PatientStopCardProps> = ({
     Linking.openURL(url);
   };
 
+  const callPatient = () => {
+    if (stop.phone) Linking.openURL(`tel:${stop.phone}`);
+  };
+
   const handleNotesChange = (text: string) => {
     setNotes(text);
     onNotesChange(text);
   };
+
+  const tubes = stop.tubes ?? [];
+  const accessories = stop.accessories ?? [];
 
   return (
     <View style={styles.container}>
@@ -47,8 +54,17 @@ export const PatientStopCard: React.FC<PatientStopCardProps> = ({
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.patientName}>{stop.patientName}</Text>
-          <Text style={styles.suburb}>{stop.suburb}</Text>
+          {stop.time ? (
+            <Text style={styles.suburb}>Scheduled {stop.time}</Text>
+          ) : stop.suburb ? (
+            <Text style={styles.suburb}>{stop.suburb}</Text>
+          ) : null}
         </View>
+        {stop.phone && (
+          <TouchableOpacity style={styles.callButton} onPress={callPatient}>
+            <Ionicons name="call" size={18} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.addressContainer}>
@@ -61,25 +77,43 @@ export const PatientStopCard: React.FC<PatientStopCardProps> = ({
         <Text style={styles.mapsButtonText}>Navigate</Text>
       </TouchableOpacity>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Required Tubes</Text>
-        {stop.tubes.map((tube, index) => (
-          <View key={index} style={styles.itemRow}>
-            <View style={styles.bullet} />
-            <Text style={styles.itemText}>{tube}</Text>
-          </View>
-        ))}
-      </View>
+      {stop.specialNotes ? (
+        <View style={styles.specialNotesBox}>
+          <Ionicons name="information-circle" size={16} color={COLORS.warning} />
+          <Text style={styles.specialNotesText}>{stop.specialNotes}</Text>
+        </View>
+      ) : null}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Required Accessories</Text>
-        {stop.accessories.map((accessory, index) => (
-          <View key={index} style={styles.itemRow}>
-            <View style={styles.bullet} />
-            <Text style={styles.itemText}>{accessory}</Text>
-          </View>
-        ))}
-      </View>
+      {stop.referralUploaded === true && (
+        <View style={styles.referralBadge}>
+          <Ionicons name="document-text" size={14} color={COLORS.accent} />
+          <Text style={styles.referralText}>Referral on file</Text>
+        </View>
+      )}
+
+      {tubes.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Required Tubes</Text>
+          {tubes.map((tube, index) => (
+            <View key={index} style={styles.itemRow}>
+              <View style={styles.bullet} />
+              <Text style={styles.itemText}>{tube}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {accessories.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Required Accessories</Text>
+          {accessories.map((accessory, index) => (
+            <View key={index} style={styles.itemRow}>
+              <View style={styles.bullet} />
+              <Text style={styles.itemText}>{accessory}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={styles.slidersContainer}>
         <SwipeSlider
@@ -156,6 +190,14 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 14,
   },
+  callButton: {
+    backgroundColor: COLORS.accent,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -180,6 +222,33 @@ const styles = StyleSheet.create({
   mapsButtonText: {
     color: COLORS.primary,
     fontSize: 14,
+    fontWeight: '600',
+  },
+  specialNotesBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.xs,
+    backgroundColor: 'rgba(255, 183, 77, 0.1)',
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  specialNotesText: {
+    color: COLORS.warning,
+    fontSize: 13,
+    flex: 1,
+  },
+  referralBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: SPACING.sm,
+  },
+  referralText: {
+    color: COLORS.accent,
+    fontSize: 12,
     fontWeight: '600',
   },
   section: {

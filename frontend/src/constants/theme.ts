@@ -16,10 +16,10 @@ export const COLORS = {
 };
 
 export const FONTS = {
-  regular: 'Lexend-Regular',
-  medium: 'Lexend-Medium',
-  semiBold: 'Lexend-SemiBold',
-  bold: 'Lexend-Bold',
+  regular: 'BricolageGrotesque-Regular',
+  medium: 'BricolageGrotesque-Medium',
+  semiBold: 'BricolageGrotesque-SemiBold',
+  bold: 'BricolageGrotesque-Bold',
 };
 
 export const SPACING = {

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -32,30 +32,46 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
   const [isComplete, setIsComplete] = useState(completed);
   const [sliderWidth, setSliderWidth] = useState(Dimensions.get('window').width - 32);
 
-  const maxSlide = sliderWidth - THUMB_SIZE - 8;
+  // Refs so the PanResponder closure always reads current values,
+  // even though it is created only once.
+  const onCompleteRef = useRef(onComplete);
+  const disabledRef = useRef(disabled);
+  const isCompleteRef = useRef(isComplete);
+  const maxSlideRef = useRef(sliderWidth - THUMB_SIZE - 8);
+
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+  useEffect(() => { disabledRef.current = disabled; }, [disabled]);
+  useEffect(() => { isCompleteRef.current = isComplete; }, [isComplete]);
+  useEffect(() => {
+    maxSlideRef.current = sliderWidth - THUMB_SIZE - 8;
+  }, [sliderWidth]);
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !isComplete && !disabled,
-      onMoveShouldSetPanResponder: () => !isComplete && !disabled,
+      onStartShouldSetPanResponder: () =>
+        !isCompleteRef.current && !disabledRef.current,
+      onMoveShouldSetPanResponder: () =>
+        !isCompleteRef.current && !disabledRef.current,
       onPanResponderGrant: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       },
       onPanResponderMove: (_, gesture) => {
-        if (isComplete || disabled) return;
-        const newX = Math.max(0, Math.min(gesture.dx, maxSlide));
+        if (isCompleteRef.current || disabledRef.current) return;
+        const newX = Math.max(0, Math.min(gesture.dx, maxSlideRef.current));
         translateX.setValue(newX);
       },
       onPanResponderRelease: (_, gesture) => {
-        if (isComplete || disabled) return;
+        if (isCompleteRef.current || disabledRef.current) return;
+        const maxSlide = maxSlideRef.current;
         if (gesture.dx >= maxSlide * 0.8) {
           Animated.spring(translateX, {
             toValue: maxSlide,
             useNativeDriver: true,
           }).start(() => {
             setIsComplete(true);
+            isCompleteRef.current = true;
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            onComplete();
+            onCompleteRef.current();
           });
         } else {
           Animated.spring(translateX, {
@@ -68,8 +84,9 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
   ).current;
 
   const progressWidth = translateX.interpolate({
-    inputRange: [0, maxSlide],
+    inputRange: [0, Math.max(maxSlideRef.current, 1)],
     outputRange: ['0%', '100%'],
+    extrapolate: 'clamp',
   });
 
   if (isComplete || completed) {
@@ -92,7 +109,7 @@ export const SwipeSlider: React.FC<SwipeSliderProps> = ({
   }
 
   return (
-    <View 
+    <View
       style={styles.container}
       onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
     >
